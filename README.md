@@ -13,3 +13,6 @@ do not make use of the `USERPROFILE`
 environment variable so
 `C:\Users\chris` is currently
 hardcoded into this repo.
+
+This project is setup using
+[Malware's development kit](https://github.com/malware-dev/MDK-SE).
