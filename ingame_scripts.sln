@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.438
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tunnel-bore", "tunnel-bore\tunnel-bore.csproj", "{66E8477A-D321-45D5-9E93-33CE42B06690}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{66E8477A-D321-45D5-9E93-33CE42B06690}.Debug|x64.ActiveCfg = Debug|x64
+		{66E8477A-D321-45D5-9E93-33CE42B06690}.Debug|x64.Build.0 = Debug|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C6F685F4-5C45-4584-8895-E4116AF631B0}
+	EndGlobalSection
+EndGlobal
