@@ -43,11 +43,14 @@ namespace IngameScript
                     Idle();
                     return;
                 case "extend":
+                    ConnectorFront.Disconnect();
                     ExtensionPistons.Extend();
                     Idle();
                     return;
                 case "retract":
-                    ExtensionPistons.Retract();
+                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                    if (!ExtensionPistons.Retract())
+                        return;
                     Idle();
                     return;
                 case "extend front":
@@ -115,6 +118,9 @@ namespace IngameScript
                     command = "disable drills";
                     Runtime.UpdateFrequency = UpdateFrequency.Once;
                     return;
+                case "test":
+                    Transfer();
+                    return;
                 default:
                     Idle();
                     return;
@@ -142,6 +148,8 @@ namespace IngameScript
         private IMyCargoContainer ContainerRear;
         private IMyInventory RearContainerInventory;
 
+        private MyItemType SteelPlate;
+
         private string command = "idle";
 
         public Program()
@@ -165,6 +173,8 @@ namespace IngameScript
             ContainerRear = GetBlock<IMyCargoContainer>("Cargo Container Rear");
             FrontContainerInventory = ContainerFront.GetInventory();
             RearContainerInventory = ContainerRear.GetInventory();
+
+            SteelPlate = new MyItemType("MyObjectBuilder_Component", "SteelPlate");
         }
 
         public List<T> GetBlocksFromGroup<T>(string groupName) where T : class
@@ -200,10 +210,11 @@ namespace IngameScript
                 ExtensionPistons.Enable();
 
             if (ExtensionPistons.Retracted())
-                if (!LockAndTransfer())
-                    return;
-
-            Echo("Status: " + ConnectorFront.Status);
+            {
+                ConnectorFront.Connect();
+                Transfer();
+                ConnectorFront.Disconnect();
+            }
 
             if (ExtensionPistons.Retracted() || ExtensionPistons.Extending())
             {
@@ -345,10 +356,48 @@ namespace IngameScript
         }
 
         // Steel Plate Transfer
-        bool LockAndTransfer()
+        IMyInventory MostFullInventory(MyItemType item)
         {
-            ConnectorFront.Connect();
-            return ConnectorFront.Status == MyShipConnectorStatus.Connected;
+            if (FrontContainerInventory.GetItemAmount(item) > RearContainerInventory.GetItemAmount(SteelPlate))
+                return FrontContainerInventory;
+            return RearContainerInventory;
+        }
+
+        VRage.MyFixedPoint TotalItems(MyItemType item)
+        {
+            return FrontContainerInventory.GetItemAmount(item) + RearContainerInventory.GetItemAmount(SteelPlate);
+        }
+
+        void Transfer()
+        {
+            foreach (IMyShipWelder welder in Welders)
+            {
+                IMyInventory source = MostFullInventory(SteelPlate);
+                IMyInventory welderInv = welder.GetInventory();
+
+                if (!source.CanTransferItemTo(welderInv, SteelPlate))
+                {
+                    Echo("Cannot transfer Steel Plate to " + welder.Name);
+                    return;
+                }
+
+                var maybeSteelPlate = source.FindItem(SteelPlate);
+                if (maybeSteelPlate == null)
+                {
+                    Echo("Could not find steel plate!");
+                    return;
+                }
+
+                if (welderInv.GetItemAmount(SteelPlate) > 75)
+                    continue;
+
+                var steelPlate = (MyInventoryItem)maybeSteelPlate;
+
+                if (source.GetItemAmount(SteelPlate) > 50)
+                    source.TransferItemTo(welderInv, steelPlate, 50);
+                else
+                    source.TransferItemTo(welderInv, steelPlate, null);
+            }
         }
     }
 }
