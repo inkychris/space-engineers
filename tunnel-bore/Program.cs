@@ -66,11 +66,11 @@ namespace IngameScript
                     Idle();
                     return;
                 case "retract front":
-                    UnlockAndRetractFront();
+                    UnlockAndRetractFront(0f);
                     Idle();
                     return;
                 case "retract rear":
-                    UnlockAndRetractRear();
+                    UnlockAndRetractRear(0f);
                     Idle();
                     return;
                 case "enable drills":
@@ -117,9 +117,6 @@ namespace IngameScript
                     ExtensionPistons.Disable();
                     command = "disable drills";
                     Runtime.UpdateFrequency = UpdateFrequency.Once;
-                    return;
-                case "test":
-                    Transfer();
                     return;
                 default:
                     Idle();
@@ -212,7 +209,8 @@ namespace IngameScript
             if (ExtensionPistons.Retracted())
             {
                 ConnectorFront.Connect();
-                Transfer();
+                if (!Transfer())
+                    return;
                 ConnectorFront.Disconnect();
             }
 
@@ -310,17 +308,19 @@ namespace IngameScript
             return false;
         }
 
-        bool UnlockAndRetractFront()
+        bool UnlockAndRetractFront(float minLimit = 1f)
         {
             if (RearGears.AllLocked())
                 FrontGears.Unlock();
+            FrontGearPistons.MinLimit(minLimit);
             return FrontGearPistons.Retract();
         }
 
-        bool UnlockAndRetractRear()
+        bool UnlockAndRetractRear(float minLimit = 1f)
         {
             if (FrontGears.AllLocked())
                 RearGears.Unlock();
+            RearGearPistons.MinLimit(minLimit);
             return RearGearPistons.Retract();
         }
 
@@ -343,6 +343,8 @@ namespace IngameScript
         bool DriveMode()
         {
             cockpit.HandBrake = true;
+            FrontGearPistons.MinLimit(0);
+            RearGearPistons.MinLimit(0);
             if (!(FrontGearPistons.Retracting() && RearGearPistons.Retracting()))
             {
                 FrontGearPistons.Retract(0.2f);
@@ -368,36 +370,39 @@ namespace IngameScript
             return FrontContainerInventory.GetItemAmount(item) + RearContainerInventory.GetItemAmount(SteelPlate);
         }
 
-        void Transfer()
+        bool Transfer()
         {
+            if (TotalItems(SteelPlate) < 200)
+            {
+                Echo("Running low on steel plate!");
+                return false;
+            }
+
             foreach (IMyShipWelder welder in Welders)
             {
                 IMyInventory source = MostFullInventory(SteelPlate);
                 IMyInventory welderInv = welder.GetInventory();
 
+                if (welderInv.GetItemAmount(SteelPlate) >= 50)
+                    continue;
+
                 if (!source.CanTransferItemTo(welderInv, SteelPlate))
                 {
                     Echo("Cannot transfer Steel Plate to " + welder.Name);
-                    return;
+                    return false;
                 }
 
                 var maybeSteelPlate = source.FindItem(SteelPlate);
                 if (maybeSteelPlate == null)
                 {
                     Echo("Could not find steel plate!");
-                    return;
+                    return false;
                 }
 
-                if (welderInv.GetItemAmount(SteelPlate) > 75)
-                    continue;
-
                 var steelPlate = (MyInventoryItem)maybeSteelPlate;
-
-                if (source.GetItemAmount(SteelPlate) > 50)
-                    source.TransferItemTo(welderInv, steelPlate, 50);
-                else
-                    source.TransferItemTo(welderInv, steelPlate, null);
+                source.TransferItemTo(welderInv, steelPlate, 50);
             }
+            return true;
         }
     }
 }
