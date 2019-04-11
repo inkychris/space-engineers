@@ -21,7 +21,12 @@ namespace IngameScript
     {
         public class PistonGroup : BlockGroup<IMyPistonBase>
         {
-            public PistonGroup(List<IMyPistonBase> blocklist) : base(blocklist) { }
+            private float extensionUnit;
+
+            public PistonGroup(List<IMyPistonBase> blocklist, float unit = 1) : base(blocklist)
+            {
+                extensionUnit = unit;
+            }
 
             private bool Is(PistonStatus status)
             {
@@ -29,7 +34,6 @@ namespace IngameScript
                     if (piston.Status != status)
                         return false;
                 return true;
-
             }
 
             public bool Stopped() { return Is(PistonStatus.Stopped); }
@@ -38,19 +42,32 @@ namespace IngameScript
             public bool Retracted() { return Is(PistonStatus.Retracted); }
             public bool Retracting() { return Is(PistonStatus.Retracting); }
 
+            public float HighestPosition()
+            {
+                return group.First().HighestPosition / extensionUnit;
+            }
+
+            public float LowestPosition()
+            {
+                return group.First().LowestPosition / extensionUnit;
+            }
+
+            public float CurrentPosition()
+            {
+                return group.First().CurrentPosition / extensionUnit;
+            }
+
             public void MinLimit(float limit)
             {
                 foreach (IMyPistonBase piston in group)
-                    piston.MinLimit = limit;
+                    piston.MinLimit = limit * extensionUnit;
             }
 
             public void MaxLimit(float limit)
             {
                 foreach (IMyPistonBase piston in group)
-                    piston.MaxLimit = limit;
+                    piston.MaxLimit = limit * extensionUnit;
             }
-
-            public float Position() { return group.First().CurrentPosition; }
 
             public bool Extend(float velocity = 0.5f)
             {
@@ -59,7 +76,7 @@ namespace IngameScript
                 if (!extended)
                     foreach (IMyPistonBase piston in group)
                     {
-                        piston.Velocity = velocity;
+                        piston.Velocity = velocity * extensionUnit;
                         piston.Extend();
                     }
                 return extended;
@@ -72,7 +89,7 @@ namespace IngameScript
                 if (!retracted)
                     foreach (IMyPistonBase piston in group)
                     {
-                        piston.Velocity = velocity;
+                        piston.Velocity = velocity * extensionUnit;
                         piston.Retract();
                     }
                 return retracted;
