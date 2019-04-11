@@ -34,6 +34,16 @@ namespace IngameScript
                 return base.Retract(velocity / group.Count);
             }
 
+            new public float HighestPosition()
+            {
+                return base.HighestPosition() * group.Count;
+            }
+
+            new public float LowestPosition()
+            {
+                return base.LowestPosition() * group.Count;
+            }
+
             new public float CurrentPosition()
             {
                 float result = 0;
