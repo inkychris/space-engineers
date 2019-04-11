@@ -1,4 +1,4 @@
-using Sandbox.Game.EntityComponents;
+﻿using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -93,7 +93,7 @@ namespace IngameScript
                     return;
                 case "repeat forward":
                     Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    Forward(0.1f);
+                    Forward(0.075f);
                     return;
                 case "repeat backward":
                     Runtime.UpdateFrequency = UpdateFrequency.Update10;
@@ -180,7 +180,7 @@ namespace IngameScript
             Runtime.UpdateFrequency = UpdateFrequency.None;
         }
 
-        public void Forward(float velocity = 0.1f)
+        public void Forward(float velocity)
         {
             if (ExtensionPistons.Stopped())
                 ExtensionPistons.Enable();
@@ -287,7 +287,7 @@ namespace IngameScript
             return false;
         }
 
-        bool UnlockAndRetractFront(float minLimit = 1f)
+        bool UnlockAndRetractFront(float minLimit = 1.25f)
         {
             if (RearGears.AllLocked())
                 FrontGears.Unlock();
@@ -295,7 +295,7 @@ namespace IngameScript
             return FrontGearPistons.Retract();
         }
 
-        bool UnlockAndRetractRear(float minLimit = 1f)
+        bool UnlockAndRetractRear(float minLimit = 1.25f)
         {
             if (FrontGears.AllLocked())
                 RearGears.Unlock();

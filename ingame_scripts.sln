@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.438
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tunnel-bore", "tunnel-bore\tunnel-bore.csproj", "{66E8477A-D321-45D5-9E93-33CE42B06690}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "triaxis-welder", "triaxis-welder\triaxis-welder.csproj", "{7B694899-408B-4325-811B-9CDAA008C9F3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -12,6 +14,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{66E8477A-D321-45D5-9E93-33CE42B06690}.Debug|x64.ActiveCfg = Debug|x64
 		{66E8477A-D321-45D5-9E93-33CE42B06690}.Debug|x64.Build.0 = Debug|x64
+		{7B694899-408B-4325-811B-9CDAA008C9F3}.Debug|x64.ActiveCfg = Debug|x64
+		{7B694899-408B-4325-811B-9CDAA008C9F3}.Debug|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
