@@ -1,4 +1,4 @@
-﻿using Sandbox.Game.EntityComponents;
+using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -172,27 +172,6 @@ namespace IngameScript
             RearContainerInventory = ContainerRear.GetInventory();
 
             SteelPlate = new MyItemType("MyObjectBuilder_Component", "SteelPlate");
-        }
-
-        public List<T> GetBlocksFromGroup<T>(string groupName) where T : class
-        {
-            IMyBlockGroup blockGroup = GridTerminalSystem.GetBlockGroupWithName(groupName);
-            if (blockGroup == null)
-            {
-                Echo("Block group '" + groupName + "' not found!");
-                return new List<T>();
-            }
-            List<T> blocks = new List<T>();
-            blockGroup.GetBlocksOfType(blocks);
-            return blocks;
-        }
-
-        public T GetBlock<T>(string name) where T : class
-        {
-            T block = GridTerminalSystem.GetBlockWithName(name) as T;
-            if (block == null)
-                Echo("Block '" + name + "' not found!");
-            return block;
         }
 
         public void Idle()
