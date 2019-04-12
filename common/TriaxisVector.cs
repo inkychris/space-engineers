@@ -59,6 +59,11 @@ namespace IngameScript
                 );
             }
 
+            public bool Equals(TriaxisVector other)
+            {
+                return (x == other.x) && (y == other.y) && (z == other.z);
+            }
+
             new public string ToString()
             {
                 return string.Format("x:{0} y:{1} z:{2}", x, y, z);
