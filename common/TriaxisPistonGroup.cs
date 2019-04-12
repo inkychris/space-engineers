@@ -20,58 +20,56 @@ namespace IngameScript
 {
     partial class Program
     {
-        public struct TriaxisCoord
-        {
-            public float x, y, z;
-
-            public static TriaxisCoord operator +(TriaxisCoord first, TriaxisCoord second)
-            {
-                return new TriaxisCoord
-                {
-                    x = first.x + second.x,
-                    y = first.y + second.y,
-                    z = first.z + second.z
-                };
-            }
-        }
-
         public class TriaxisPistonGroup
         {
             private PistonStack xAxis;
             private PistonStack yAxis;
             private PistonStack zAxis;
-            private float velocity;
 
             public TriaxisPistonGroup(PistonStack x, PistonStack y, PistonStack z)
             {
                 xAxis = x;
                 yAxis = y;
                 zAxis = z;
-                velocity = 1f;
             }
 
-            public TriaxisCoord CurrentPosition()
+            public bool Stopped() { return xAxis.Stopped() && yAxis.Stopped() && zAxis.Stopped(); }
+
+            public TriaxisVector CurrentPosition()
             {
-                return new TriaxisCoord {
-                    x = xAxis.CurrentPosition(),
-                    y = yAxis.CurrentPosition(),
-                    z = zAxis.CurrentPosition(),
-                };
+                return new TriaxisVector(
+                    xAxis.CurrentPosition(),
+                    yAxis.CurrentPosition(),
+                    zAxis.CurrentPosition()
+                );
             }
 
-            public void GoTo(TriaxisCoord target)
+            public TriaxisVector TranslationVector(TriaxisVector target)
             {
-                xAxis.GoTo(target.x, velocity);
-                yAxis.GoTo(target.y, velocity);
-                zAxis.GoTo(target.z, velocity);
+                return target - CurrentPosition();
             }
 
-            public void GoToRelative(TriaxisCoord offset)
+            public TriaxisVector VelocityVector(TriaxisVector target, float velocity)
             {
-                TriaxisCoord target = CurrentPosition() + offset;
-                xAxis.GoTo(target.x, velocity);
-                yAxis.GoTo(target.y, velocity);
-                zAxis.GoTo(target.z, velocity);
+                var translationVector = TranslationVector(target);
+                float directDistance = (float) Math.Sqrt(Math.Pow(translationVector.x, 2) + Math.Pow(translationVector.y, 2) + Math.Pow(translationVector.z, 2));
+                if (directDistance == 0)
+                    return new TriaxisVector();
+                return translationVector * (velocity / directDistance);
+            }
+
+            public void GoTo(TriaxisVector target, float velocity)
+            {
+                var velocityVector = VelocityVector(target, velocity);
+                xAxis.GoTo(target.x, velocityVector.x);
+                yAxis.GoTo(target.y, velocityVector.y);
+                zAxis.GoTo(target.z, velocityVector.z);
+            }
+
+            public void GoToRelative(TriaxisVector offset, float velocity)
+            {
+                TriaxisVector target = CurrentPosition() + offset;
+                GoTo(target, velocity);
             }
         }
 

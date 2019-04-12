@@ -31,11 +31,12 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            pistons.GoTo(new TriaxisCoord {
-                x = float.Parse(ParseArg("x", argument)),
-                y = float.Parse(ParseArg("y", argument)),
-                z = float.Parse(ParseArg("z", argument))
-            });
+            var target = new TriaxisVector(
+                float.Parse(ParseArg("x", argument)),
+                float.Parse(ParseArg("y", argument)),
+                float.Parse(ParseArg("z", argument))
+            );
+            pistons.GoTo(target, 0.5f);
         }
     }
 }

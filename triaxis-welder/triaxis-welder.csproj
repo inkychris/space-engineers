@@ -108,6 +108,9 @@
     <Compile Include="..\common\TriaxisPistonGroup.cs">
       <Link>TriaxisPistonGroup.cs</Link>
     </Compile>
+    <Compile Include="..\common\TriaxisVector.cs">
+      <Link>TriaxisVector.cs</Link>
+    </Compile>
     <Compile Include="..\common\Util.cs">
       <Link>Util.cs</Link>
     </Compile>
