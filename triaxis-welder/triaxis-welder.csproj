@@ -99,6 +99,9 @@
     <Compile Include="..\common\BlockGroup.cs">
       <Link>BlockGroup.cs</Link>
     </Compile>
+    <Compile Include="..\common\BlockUtil.cs">
+      <Link>BlockUtil.cs</Link>
+    </Compile>
     <Compile Include="..\common\PistonGroup.cs">
       <Link>PistonGroup.cs</Link>
     </Compile>
@@ -110,9 +113,6 @@
     </Compile>
     <Compile Include="..\common\TriaxisVector.cs">
       <Link>TriaxisVector.cs</Link>
-    </Compile>
-    <Compile Include="..\common\Util.cs">
-      <Link>Util.cs</Link>
     </Compile>
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options">
