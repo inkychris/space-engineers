@@ -40,14 +40,5 @@ namespace IngameScript
                 Echo("Block '" + name + "' not found!");
             return block;
         }
-
-        public string ParseArg(string arg, string container)
-        {
-            string pattern = @"(?:[" + arg + @"][\s=]?)(.+?)(\s|\z)";
-            System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(container, pattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            if (m.Success)
-                return m.Groups[1].Value;
-            return "";
-        }
     }
 }
