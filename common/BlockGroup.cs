@@ -23,7 +23,12 @@ namespace IngameScript
         {
             protected List<T> group;
 
-            public BlockGroup(List<T> blocklist) { group = blocklist; }
+            public BlockGroup(List<T> blocklist)
+            {
+                if (blocklist.Count == 0)
+                    throw new ArgumentException("Block group is empty!");
+                group = blocklist;
+            }
 
             public T First() { return group.First(); }
 
