@@ -23,18 +23,7 @@ namespace IngameScript
         {
             private float extensionUnit;
 
-            public PistonGroup(List<IMyPistonBase> blocklist, float unit = 1) : base(blocklist)
-            {
-                extensionUnit = unit;
-            }
-
-            private bool Is(PistonStatus status)
-            {
-                foreach (IMyPistonBase piston in group)
-                    if (piston.Status != status)
-                        return false;
-                return true;
-            }
+            public PistonGroup(List<IMyPistonBase> blocklist, float unit = 1) : base(blocklist) { extensionUnit = unit; }
 
             public bool Stopped() { return Is(PistonStatus.Stopped); }
             public bool Extended() { return Is(PistonStatus.Extended); }
@@ -42,20 +31,9 @@ namespace IngameScript
             public bool Retracted() { return Is(PistonStatus.Retracted); }
             public bool Retracting() { return Is(PistonStatus.Retracting); }
 
-            public float HighestPosition()
-            {
-                return group.First().HighestPosition / extensionUnit;
-            }
-
-            public float LowestPosition()
-            {
-                return group.First().LowestPosition / extensionUnit;
-            }
-
-            public float CurrentPosition()
-            {
-                return group.First().CurrentPosition / extensionUnit;
-            }
+            public float HighestPosition() { return group.First().HighestPosition / extensionUnit; }
+            public float LowestPosition() { return group.First().LowestPosition / extensionUnit; }
+            public float CurrentPosition() { return group.First().CurrentPosition / extensionUnit; }
 
             public void MinLimit(float limit)
             {
@@ -93,6 +71,36 @@ namespace IngameScript
                         piston.Retract();
                     }
                 return retracted;
+            }
+
+            public void GoTo(float target, float velocity)
+            {
+                if (target > HighestPosition())
+                    target = HighestPosition();
+                if (target < LowestPosition())
+                    target = LowestPosition();
+                if (CurrentPosition() < target)
+                {
+                    MinLimit(CurrentPosition());
+                    MaxLimit(target);
+                    Extend(velocity);
+                }
+                else
+                {
+                    MinLimit(target);
+                    MaxLimit(CurrentPosition());
+                    Retract(velocity);
+                }
+            }
+
+            public void GoToRelative(float offset, float velocity) { GoTo(CurrentPosition() + offset, velocity); }
+
+            private bool Is(PistonStatus status)
+            {
+                foreach (IMyPistonBase piston in group)
+                    if (piston.Status != status)
+                        return false;
+                return true;
             }
         }
     }
