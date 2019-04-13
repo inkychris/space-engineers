@@ -22,9 +22,16 @@ namespace IngameScript
     {
         public class WalkerSettings
         {
+            public WalkerSettings()
+            {
+                Extension = new PistonSettings();
+                Legs = new PistonSettings();
+            }
+
             public PistonSettings Extension;
             public PistonSettings Legs;
         }
+
         public class Walker
         {
             protected PistonGroup extensionPistons;
@@ -34,18 +41,21 @@ namespace IngameScript
             protected LandingGearGroup frontGears;
             protected LandingGearGroup rearGears;
 
-            public WalkerSettings Settings = new WalkerSettings();
+            public WalkerSettings Settings;
 
             protected Hooks ForwardHooks;
             protected Hooks BackwardHooks;
 
             public Walker(PistonGroup extensionPistons, PistonGroup frontPistons, PistonGroup rearPistons, LandingGearGroup frontGears, LandingGearGroup rearGears)
             {
+                Settings = new WalkerSettings();
+
                 this.extensionPistons = extensionPistons;
                 this.frontPistons = frontPistons;
                 this.rearPistons = rearPistons;
                 this.frontGears = frontGears;
                 this.rearGears = rearGears;
+
                 ForwardHooks = new Hooks();
                 BackwardHooks = new Hooks();
             }
@@ -58,10 +68,10 @@ namespace IngameScript
                 public Func<bool> Retracted = () => true;
             }
 
-            bool ExtendAndLockFront()
+            public bool ExtendAndLockFront()
             {
                 frontPistons.Velocity(Settings.Legs.ExtensionVelocity);
-                frontPistons.MaxLimit(Settings.Legs.MinLimit);
+                frontPistons.MaxLimit(Settings.Legs.MaxLimit);
                 if (frontPistons.Extend())
                 {
                     frontGears.Lock();
@@ -70,10 +80,10 @@ namespace IngameScript
                 return false;
             }
 
-            bool ExtendAndLockRear()
+            public bool ExtendAndLockRear()
             {
                 rearPistons.Velocity(Settings.Legs.ExtensionVelocity);
-                frontPistons.MaxLimit(Settings.Legs.MinLimit);
+                frontPistons.MaxLimit(Settings.Legs.MaxLimit);
                 if (rearPistons.Extend())
                 {
                     rearGears.Lock();
@@ -82,21 +92,21 @@ namespace IngameScript
                 return false;
             }
 
-            bool UnlockAndRetractFront()
+            public bool UnlockAndRetractFront()
             {
                 if (rearGears.AllLocked())
                     frontGears.Unlock();
                 frontPistons.Velocity(Settings.Legs.RetractionVelocity);
-                frontPistons.MinLimit(Settings.Legs.MaxLimit);
+                frontPistons.MinLimit(Settings.Legs.MinLimit);
                 return frontPistons.Retract();
             }
 
-            bool UnlockAndRetractRear()
+            public bool UnlockAndRetractRear()
             {
                 if (frontGears.AllLocked())
                     rearGears.Unlock();
                 rearPistons.Velocity(Settings.Legs.RetractionVelocity);
-                rearPistons.MinLimit(Settings.Legs.MaxLimit);
+                rearPistons.MinLimit(Settings.Legs.MinLimit);
                 return rearPistons.Retract();
             }
 
