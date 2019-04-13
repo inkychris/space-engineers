@@ -117,7 +117,6 @@ namespace IngameScript
 
             public void Forward()
             {
-                program.Echo(System.DateTime.Now.ToString());
                 if (extensionPistons.Stopped())
                     extensionPistons.Enable();
 
@@ -131,20 +130,12 @@ namespace IngameScript
 
                 if (extensionPistons.Retracted() || extensionPistons.Extending())
                 {
-                    program.Echo("Retracted/Extending");
                     if (!ForwardHooks.Extend())
                         return;
                     if (!ExtendAndLockRear())
-                    {
-                        program.Echo("ExtendAndLockRear");
                         return;
-                    }
                     if (!UnlockAndRetractFront())
-                    {
-                        program.Echo("UnlockAndRetractFront: " + UnlockAndRetractFront());
                         return;
-                    }
-                    program.Echo("Extend");
                     extensionPistons.MaxLimit(Settings.Extension.MaxLimit);
                     extensionPistons.Velocity(Settings.Extension.ExtensionVelocity);
                     extensionPistons.Extend();
@@ -153,20 +144,12 @@ namespace IngameScript
 
                 if (extensionPistons.Extended() || extensionPistons.Retracting())
                 {
-                    program.Echo("Extended/Retracting");
                     if (!ForwardHooks.Retract())
                         return;
                     if (!ExtendAndLockFront())
-                    {
-                        program.Echo("ExtendAndLockFront");
                         return;
-                    }
                     if (!UnlockAndRetractRear())
-                    {
-                        program.Echo("UnlockAndRetractRear");
                         return;
-                    }
-                    program.Echo("Retract");
                     extensionPistons.MinLimit(Settings.Extension.MinLimit);
                     extensionPistons.Velocity(Settings.Extension.RetractionVelocity);
                     extensionPistons.Retract();
