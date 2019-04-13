@@ -61,9 +61,12 @@ namespace IngameScript
             public void GoTo(TriaxisVector target, float velocity)
             {
                 var velocityVector = VelocityVector(target, velocity);
-                xAxis.GoTo(target.x, velocityVector.x);
-                yAxis.GoTo(target.y, velocityVector.y);
-                zAxis.GoTo(target.z, velocityVector.z);
+                xAxis.Velocity(velocityVector.x);
+                xAxis.GoTo(target.x);
+                yAxis.Velocity(velocityVector.y);
+                yAxis.GoTo(target.y);
+                zAxis.Velocity(velocityVector.z);
+                zAxis.GoTo(target.z);
             }
 
             public void GoToRelative(TriaxisVector offset, float velocity)
