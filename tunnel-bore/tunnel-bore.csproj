@@ -96,11 +96,17 @@
     <Analyzer Include="c:\users\chris\appdata\local\microsoft\visualstudio\15.0_a1334e46\extensions\rnv4zq4f.tri\Analyzers\MDKAnalyzer.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\common\ArgParser.cs">
+      <Link>ArgParser.cs</Link>
+    </Compile>
     <Compile Include="..\common\BlockGroup.cs">
       <Link>BlockGroup.cs</Link>
     </Compile>
     <Compile Include="..\common\BlockUtil.cs">
       <Link>BlockUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\common\InventoryGroup.cs">
+      <Link>InventoryGroup.cs</Link>
     </Compile>
     <Compile Include="..\common\LandingGearGroup.cs">
       <Link>LandingGearGroup.cs</Link>
@@ -108,12 +114,16 @@
     <Compile Include="..\common\PistonGroup.cs">
       <Link>PistonGroup.cs</Link>
     </Compile>
+    <Compile Include="..\common\Walker.cs">
+      <Link>Walker.cs</Link>
+    </Compile>
     <Compile Include="MDK\Bootstrapper.cs" />
     <AdditionalFiles Include="MDK\MDK.options">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </AdditionalFiles>
     <Compile Include="Program.cs" />
     <AdditionalFiles Include="MDK\whitelist.cache" />
+    <Compile Include="TunnelBore.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">

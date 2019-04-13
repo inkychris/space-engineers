@@ -19,381 +19,203 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
-        public void Main(string argument, UpdateType updateSource)
-        {
-            if (argument != "")
-                command = argument;
-
-            switch (command)
-            {
-                case "lock front":
-                    FrontGears.Lock();
-                    Idle();
-                    return;
-                case "lock rear":
-                    RearGears.Lock();
-                    Idle();
-                    return;
-                case "unlock front":
-                    FrontGears.Unlock();
-                    Idle();
-                    return;
-                case "unlock rear":
-                    RearGears.Unlock();
-                    Idle();
-                    return;
-                case "extend":
-                    ConnectorFront.Disconnect();
-                    ExtensionPistons.Velocity(0.5f);
-                    ExtensionPistons.Extend();
-                    Idle();
-                    return;
-                case "retract":
-                    ExtensionPistons.Velocity(0.5f);
-                    ExtensionPistons.Retract();
-                    Idle();
-                    return;
-                case "extend front":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    if (!ExtendAndLockFront())
-                        return;
-                    Idle();
-                    return;
-                case "extend rear":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    if (!ExtendAndLockRear())
-                        return;
-                    Idle();
-                    return;
-                case "retract front":
-                    UnlockAndRetractFront(0f);
-                    Idle();
-                    return;
-                case "retract rear":
-                    UnlockAndRetractRear(0f);
-                    Idle();
-                    return;
-                case "enable drills":
-                    StartDrill(60f);
-                    Idle();
-                    return;
-                case "disable drills":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update1;
-                    if (!StopDrill())
-                        return;
-                    Idle();
-                    return;
-                case "enable welders":
-                    Welders.Enable();
-                    Idle();
-                    return;
-                case "disable welders":
-                    Welders.Disable();
-                    Idle();
-                    return;
-                case "repeat forward":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    Forward(0.075f);
-                    return;
-                case "repeat backward":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    Backward();
-                    return;
-                case "walkmode":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    if (!WalkMode())
-                        return;
-                    FrontGears.Lock();
-                    RearGears.Lock();
-                    Idle();
-                    return;
-                case "drivemode":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    if (!DriveMode())
-                        return;
-                    Idle();
-                    return;
-                case "stop":
-                    ExtensionPistons.Disable();
-                    command = "disable drills";
-                    Runtime.UpdateFrequency = UpdateFrequency.Once;
-                    return;
-                default:
-                    Idle();
-                    return;
-            }
-        }
-
-        private Dictionary<string, float> velocities;
-
-        private PistonGroup ExtensionPistons;
-        private PistonGroup FrontGearPistons;
-        private PistonGroup RearGearPistons;
-
-        private LandingGearGroup FrontGears;
-        private LandingGearGroup RearGears;
-
-        private FunctionalBlockGroup<IMyShipDrill> Drills;
-        private IMyMotorStator DrillRotor;
-        private FunctionalBlockGroup<IMyShipWelder> Welders;
-
-        private IMyCockpit cockpit;
-
-        private IMyShipConnector ConnectorFront;
-
-        private IMyCargoContainer ContainerFront;
-        private IMyInventory FrontContainerInventory;
-        private IMyCargoContainer ContainerRear;
-        private IMyInventory RearContainerInventory;
-
-        private MyItemType SteelPlate;
-
-        private string command = "idle";
+        private TunnelBore tunnelBore;
+        private ArgParser parser;
 
         public Program()
         {
-            ExtensionPistons = new PistonGroup(GetBlocksFromGroup<IMyPistonBase>("Extension Pistons"));
-            FrontGearPistons = new PistonGroup(GetBlocksFromGroup<IMyPistonBase>("Front Gear Pistons"));
-            RearGearPistons = new PistonGroup(GetBlocksFromGroup<IMyPistonBase>("Rear Gear Pistons"));
+            tunnelBore = new TunnelBore(this);
+            parser = new ArgParser();
 
-            FrontGears = new LandingGearGroup(GetBlocksFromGroup<IMyLandingGear>("Front Landing Gears"));
-            RearGears = new LandingGearGroup(GetBlocksFromGroup<IMyLandingGear>("Rear Landing Gears"));
+            tunnelBore.Settings.Legs.RetractionVelocity = 0.15f;
+            tunnelBore.Settings.Legs.ExtensionVelocity = 0.15f;
+            tunnelBore.Settings.Legs.MinLimit = 1.25f;
+            tunnelBore.Settings.Legs.MaxLimit = 1.5f;
 
-            Drills = new FunctionalBlockGroup<IMyShipDrill>(GetBlocksFromGroup<IMyShipDrill>("Drills"));
-            DrillRotor = GetBlock<IMyMotorStator>("Drill Rotor");
-            Welders = new FunctionalBlockGroup<IMyShipWelder>(GetBlocksFromGroup<IMyShipWelder>("Welders"));
-
-            cockpit = GetBlock<IMyCockpit>("Cockpit");
-            
-            ConnectorFront = GetBlock<IMyShipConnector>("Connector Centre Front");
-            ContainerFront = GetBlock<IMyCargoContainer>("Cargo Container Front");
-            ContainerRear = GetBlock<IMyCargoContainer>("Cargo Container Rear");
-            FrontContainerInventory = ContainerFront.GetInventory();
-            RearContainerInventory = ContainerRear.GetInventory();
-
-            SteelPlate = new MyItemType("MyObjectBuilder_Component", "SteelPlate");
+            tunnelBore.Settings.Extension.ExtensionVelocity = 0.075f;
+            tunnelBore.Settings.Extension.ExtensionVelocity = 0.1f;
+            tunnelBore.Settings.Extension.MinLimit = 0;
+            tunnelBore.Settings.Extension.MaxLimit = 2f;
         }
 
+        public void Main(string argument, UpdateType updateSource)
+        {
+            string previousInput = "";
+            if (argument != "")
+            {
+                previousInput = parser.Input;
+                parser.Input = argument;
+            }
+
+            if (parser.Contains("extend"))
+            {
+                Echo("Extend");
+                switch (parser.String("extend"))
+                {
+                    case "front":
+                        Echo("Front");
+                        Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                        if (!tunnelBore.ExtendAndLockFront())
+                            return;
+                        Idle();
+                        return;
+                    case "rear":
+                    case "back":
+                        Echo("Rear");
+                        Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                        if (!tunnelBore.ExtendAndLockRear())
+                            return;
+                        Idle();
+                        return;
+                    default:
+                        Echo("Default");
+                        var position = parser.Float("extend");
+                        if (position != 0)
+                            tunnelBore.GoToRelative(position);
+                        else
+                            tunnelBore.GoTo(2f);
+                        Idle();
+                        return;
+                }
+            }
+
+            if (parser.Contains("retract"))
+            {
+                Echo("Retract");
+                switch (parser.String("retract"))
+                {
+                    case "front":
+                        Echo("Front");
+                        Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                        if (!tunnelBore.UnlockAndRetractFront())
+                            return;
+                        Idle();
+                        return;
+                    case "rear":
+                    case "back":
+                        Echo("Rear");
+                        Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                        if (!tunnelBore.UnlockAndRetractRear())
+                            return;
+                        Idle();
+                        return;
+                    default:
+                        Echo("Default");
+                        var position = parser.Float("retract");
+                        if (position != 0)
+                            tunnelBore.GoToRelative(position);
+                        else
+                            tunnelBore.GoTo(0);
+                        Idle();
+                        return;
+                }
+            }
+
+            if (parser.Contains("enable"))
+            {
+                switch (parser.String("enable"))
+                {
+                    case "drill":
+                    case "drills":
+                        tunnelBore.EnableDrills();
+                        if (previousInput.Contains("repeat"))
+                            parser.Input = previousInput;
+                        else
+                            Idle();
+                        return;
+                    case "welder":
+                    case "welders":
+                        tunnelBore.EnableWelders();
+                        if (previousInput.Contains("repeat"))
+                            parser.Input = previousInput;
+                        else
+                            Idle();
+                        return;
+                    default:
+                        Echo("Unrecognised command!");
+                        return;
+                }
+            }
+
+            if (parser.Contains("disable"))
+            {
+                switch (parser.String("disable"))
+                {
+                    case "drill":
+                    case "drills":
+                        Runtime.UpdateFrequency = UpdateFrequency.Update1;
+                        if (!tunnelBore.DisableDrills())
+                            return;
+                        if (previousInput.Contains("repeat"))
+                            parser.Input = previousInput;
+                        else
+                            Idle();
+                        return;
+                    case "welder":
+                    case "welders":
+                        tunnelBore.DisableWelders();
+                        if (previousInput.Contains("repeat"))
+                            parser.Input = previousInput;
+                        else
+                            Idle();
+                        return;
+                    default:
+                        Echo("Unrecognised command!");
+                        return;
+                }
+            }
+
+            if (parser.Contains("repeat"))
+            {
+                switch (parser.String("repeat"))
+                {
+                    case "forward":
+                    case "forwards":
+                        Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                        tunnelBore.Forward();
+                        return;
+                    case "back":
+                    case "backward":
+                    case "backwards":
+                        Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                        tunnelBore.Backward();
+                        return;
+                    default:
+                        Echo("Unrecognised command!");
+                        return;
+                }
+            }
+
+            if (parser.Contains("drivemode"))
+            {
+                tunnelBore.DriveMode();
+                Idle();
+                return;
+            }
+
+            if (parser.Contains("walkmode"))
+            {
+                Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                if (!tunnelBore.WalkMode())
+                    return;
+                Idle();
+                return;
+            }
+
+            if (parser.Contains("stop|abort"))
+            {
+                Runtime.UpdateFrequency = UpdateFrequency.Update1;
+                if (!tunnelBore.Stop())
+                    return;
+                Idle();
+                return;
+            }
+        }
+        
         public void Idle()
         {
-            command = "idle";
+            parser.Input = "idle";
             Runtime.UpdateFrequency = UpdateFrequency.None;
-        }
-
-        public void Forward(float velocity)
-        {
-            if (ExtensionPistons.Stopped())
-                ExtensionPistons.Enable();
-
-            if (ExtensionPistons.Retracted())
-            {
-                ConnectorFront.Connect();
-                if (!Transfer())
-                    return;
-                ConnectorFront.Disconnect();
-            }
-
-            if (ExtensionPistons.Retracted() || ExtensionPistons.Extending())
-            {
-                if (ConnectorFront.Status == MyShipConnectorStatus.Connected)
-                    ConnectorFront.Disconnect();
-                if (!ExtendAndLockRear())
-                    return;
-                if (!UnlockAndRetractFront())
-                    return;
-                ExtensionPistons.Velocity(velocity);
-                ExtensionPistons.Extend();
-                return;
-            }
-
-            if (ExtensionPistons.Extended() || ExtensionPistons.Retracting())
-            {
-                if (!ExtendAndLockFront())
-                    return;
-                if (!UnlockAndRetractRear())
-                    return;
-                ExtensionPistons.Velocity(0.5f);
-                ExtensionPistons.Retract();
-                return;
-            }
-        }
-
-        public void Backward()
-        {
-            if (ExtensionPistons.Stopped())
-                ExtensionPistons.Enable();
-
-            if (ExtensionPistons.Retracted() || ExtensionPistons.Extending())
-            {
-                if (!ExtendAndLockFront())
-                    return;
-                if (!UnlockAndRetractRear())
-                    return;
-                ExtensionPistons.Velocity(0.5f);
-                ExtensionPistons.Extend();
-                return;
-            }
-
-            if (ExtensionPistons.Extended() || ExtensionPistons.Retracting())
-            {
-                if (!ExtendAndLockRear())
-                    return;
-                if (!UnlockAndRetractFront())
-                    return;
-                ExtensionPistons.Velocity(0.5f);
-                ExtensionPistons.Retract();
-                return;
-            }
-        }
-
-        // Drills
-        void StartDrill(float rotorRPM)
-        {
-            DrillRotor.SetValue("LowerLimit", float.MinValue);
-            DrillRotor.SetValue("UpperLimit", float.MaxValue);
-            Drills.Enable();
-            DrillRotor.TargetVelocityRPM = rotorRPM;
-            DrillRotor.Enabled = true;
-            DrillRotor.BrakingTorque = 100000f;
-        }
-
-        bool StopDrill()
-        {
-            Drills.Disable();
-            DrillRotor.Enabled = false;
-            if (Math.Abs(DrillRotor.Angle) < 0.05)
-            {
-                DrillRotor.LowerLimitRad = 0f;
-                DrillRotor.UpperLimitRad = 0f;
-                return true;
-            }
-            return false;
-        }
-
-        // Whole Landing Gear Legs
-        bool ExtendAndLockFront()
-        {
-            FrontGearPistons.Velocity(0.5f);
-            if (FrontGearPistons.Extend())
-            {
-                FrontGears.Lock();
-                return FrontGears.AllLocked();
-            }
-            return false;
-        }
-
-        bool ExtendAndLockRear()
-        {
-            RearGearPistons.Velocity(0.5f);
-            if (RearGearPistons.Extend())
-            {
-                RearGears.Lock();
-                return RearGears.AllLocked();
-            }
-            return false;
-        }
-
-        bool UnlockAndRetractFront(float minLimit = 1.25f)
-        {
-            if (RearGears.AllLocked())
-                FrontGears.Unlock();
-            FrontGearPistons.Velocity(0.5f);
-            FrontGearPistons.MinLimit(minLimit);
-            return FrontGearPistons.Retract();
-        }
-
-        bool UnlockAndRetractRear(float minLimit = 1.25f)
-        {
-            if (FrontGears.AllLocked())
-                RearGears.Unlock();
-            RearGearPistons.Velocity(0.5f);
-            RearGearPistons.MinLimit(minLimit);
-            return RearGearPistons.Retract();
-        }
-
-        bool WalkMode()
-        {
-            if (!(FrontGearPistons.Extending() && RearGearPistons.Extending()))
-            {
-                FrontGearPistons.Velocity(0.1f);
-                FrontGearPistons.Extend();
-                RearGearPistons.Velocity(0.1f);
-                RearGearPistons.Extend();
-            }
-            if (FrontGearPistons.Extended() && RearGearPistons.Extended())
-            {
-                FrontGears.Lock();
-                RearGears.Lock();
-                return true;
-            }
-            return false;
-        }
-
-        bool DriveMode()
-        {
-            cockpit.HandBrake = true;
-            FrontGearPistons.MinLimit(0);
-            RearGearPistons.MinLimit(0);
-            if (!(FrontGearPistons.Retracting() && RearGearPistons.Retracting()))
-            {
-                FrontGearPistons.Velocity(0.15f);
-                FrontGearPistons.Retract();
-                RearGearPistons.Velocity(0.15f);
-                RearGearPistons.Retract();
-            }
-            if (!FrontGears.AllUnlocked())
-                FrontGears.Unlock();
-            if (!RearGears.AllUnlocked())
-                RearGears.Unlock();
-            return FrontGearPistons.Retracted() && RearGearPistons.Retracted();
-        }
-
-        // Steel Plate Transfer
-        IMyInventory MostFullInventory(MyItemType item)
-        {
-            if (FrontContainerInventory.GetItemAmount(item) > RearContainerInventory.GetItemAmount(item))
-                return FrontContainerInventory;
-            return RearContainerInventory;
-        }
-
-        VRage.MyFixedPoint TotalItems(MyItemType item)
-        {
-            return FrontContainerInventory.GetItemAmount(item) + RearContainerInventory.GetItemAmount(item);
-        }
-
-        bool Transfer()
-        {
-            if (TotalItems(SteelPlate) < 200)
-            {
-                Echo("Running low on steel plate!");
-                return false;
-            }
-
-            foreach (IMyShipWelder welder in Welders)
-            {
-                IMyInventory source = MostFullInventory(SteelPlate);
-                IMyInventory welderInv = welder.GetInventory();
-
-                if (welderInv.GetItemAmount(SteelPlate) >= 50)
-                    continue;
-
-                if (!source.CanTransferItemTo(welderInv, SteelPlate))
-                {
-                    Echo("Cannot transfer Steel Plate to " + welder.Name);
-                    return false;
-                }
-
-                var maybeSteelPlate = source.FindItem(SteelPlate);
-                if (maybeSteelPlate == null)
-                {
-                    Echo("Could not find steel plate!");
-                    return false;
-                }
-
-                var steelPlate = (MyInventoryItem)maybeSteelPlate;
-                source.TransferItemTo(welderInv, steelPlate, 50);
-            }
-            return true;
         }
     }
 }

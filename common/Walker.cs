@@ -46,8 +46,11 @@ namespace IngameScript
             protected Hooks ForwardHooks;
             protected Hooks BackwardHooks;
 
-            public Walker(PistonGroup extensionPistons, PistonGroup frontPistons, PistonGroup rearPistons, LandingGearGroup frontGears, LandingGearGroup rearGears)
+            private Program program;
+
+            public Walker(Program prog, PistonGroup extensionPistons, PistonGroup frontPistons, PistonGroup rearPistons, LandingGearGroup frontGears, LandingGearGroup rearGears)
             {
+                program = prog;
                 Settings = new WalkerSettings();
 
                 this.extensionPistons = extensionPistons;
@@ -83,7 +86,7 @@ namespace IngameScript
             public bool ExtendAndLockRear()
             {
                 rearPistons.Velocity(Settings.Legs.ExtensionVelocity);
-                frontPistons.MaxLimit(Settings.Legs.MaxLimit);
+                rearPistons.MaxLimit(Settings.Legs.MaxLimit);
                 if (rearPistons.Extend())
                 {
                     rearGears.Lock();
@@ -95,7 +98,10 @@ namespace IngameScript
             public bool UnlockAndRetractFront()
             {
                 if (rearGears.AllLocked())
+                {
                     frontGears.Unlock();
+                    program.Echo("Unlock Front");
+                }
                 frontPistons.Velocity(Settings.Legs.RetractionVelocity);
                 frontPistons.MinLimit(Settings.Legs.MinLimit);
                 return frontPistons.Retract();
@@ -112,6 +118,7 @@ namespace IngameScript
 
             public void Forward()
             {
+                program.Echo(System.DateTime.Now.ToString());
                 if (extensionPistons.Stopped())
                     extensionPistons.Enable();
 
@@ -125,12 +132,21 @@ namespace IngameScript
 
                 if (extensionPistons.Retracted() || extensionPistons.Extending())
                 {
+                    program.Echo("Retracted/Extending");
                     if (!ForwardHooks.Extend())
                         return;
                     if (!ExtendAndLockRear())
+                    {
+                        program.Echo("ExtendAndLockRear");
                         return;
+                    }
                     if (!UnlockAndRetractFront())
+                    {
+                        program.Echo("UnlockAndRetractFront: " + UnlockAndRetractFront());
                         return;
+                    }
+                    program.Echo("Extend");
+                    extensionPistons.MaxLimit(Settings.Extension.MaxLimit);
                     extensionPistons.Velocity(Settings.Extension.ExtensionVelocity);
                     extensionPistons.Extend();
                     return;
@@ -138,12 +154,21 @@ namespace IngameScript
 
                 if (extensionPistons.Extended() || extensionPistons.Retracting())
                 {
+                    program.Echo("Extended/Retracting");
                     if (!ForwardHooks.Retract())
                         return;
                     if (!ExtendAndLockFront())
+                    {
+                        program.Echo("ExtendAndLockFront");
                         return;
+                    }
                     if (!UnlockAndRetractRear())
+                    {
+                        program.Echo("UnlockAndRetractRear");
                         return;
+                    }
+                    program.Echo("Retract");
+                    extensionPistons.MinLimit(Settings.Extension.MinLimit);
                     extensionPistons.Velocity(Settings.Extension.RetractionVelocity);
                     extensionPistons.Retract();
                     return;
