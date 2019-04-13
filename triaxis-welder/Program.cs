@@ -61,7 +61,6 @@ namespace IngameScript
 
             if (commandIndex < commands.Length)
             {
-                Echo("Running command" + commandIndex);
                 Runtime.UpdateFrequency = UpdateFrequency.Update10;
                 if (GoTo())
                 {
@@ -69,20 +68,11 @@ namespace IngameScript
                     if (commandIndex == commands.Length)
                         return;
                     parser = new ArgParser(commands[commandIndex]);
-                    Echo("Incrementing cmd index");
                     return;
                 }
             }
             else
-            {
                 Runtime.UpdateFrequency = UpdateFrequency.None;
-                Echo("Done!");
-            }
-        }
-
-        public bool Home()
-        {
-            return pistons.Stopped();
         }
 
         public bool GoTo()
