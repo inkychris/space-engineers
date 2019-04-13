@@ -27,11 +27,14 @@ namespace IngameScript
         private string[] commands;
         private int commandIndex;
 
+        private const string blockPrefix = "Triaxis Welder: ";
+        private const float defaultVelocity = 0.5f;
+
         public Program()
         {
-            self = GetBlock<IMyProgrammableBlock>("Triaxis Welder Controller");
-            pistons = LargeTriaxisPistonGroup("X Axis", "Y Axis", "Z Axis");
-            welder = GetBlock<IMyShipWelder>("Welder");
+            self = GetBlock<IMyProgrammableBlock>(blockPrefix + "Controller");
+            pistons = LargeTriaxisPistonGroup(blockPrefix + "X Axis", blockPrefix + "Y Axis", blockPrefix + "Z Axis");
+            welder = GetBlock<IMyShipWelder>(blockPrefix + "Welder");
         }
 
         public void Main(string argument, UpdateType updateSource)
@@ -45,7 +48,7 @@ namespace IngameScript
 
             if (parser.Contains("home"))
             {
-                pistons.GoTo(new TriaxisVector(), parser.Float("-v|--velocity", 0.5f));
+                pistons.GoTo(new TriaxisVector(), parser.Float("-v|--velocity", defaultVelocity));
                 return;
             }
 
@@ -85,7 +88,7 @@ namespace IngameScript
         public bool GoTo()
         {
             var target = new TriaxisVector(parser.Float("x"), parser.Float("y"), parser.Float("z"));
-            pistons.GoTo(target, parser.Float("-v|--velocity", 0.5f));
+            pistons.GoTo(target, parser.Float("-v|--velocity", defaultVelocity));
             return pistons.CurrentPosition().Equals(target);
         }
     }
