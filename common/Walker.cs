@@ -25,27 +25,19 @@ namespace IngameScript
             public PistonSettings Extension;
             public PistonSettings Legs;
         }
-
-        public class WalkerHooks
-        {
-            public bool Extend() { return true; }
-            public bool Extended() { return true; }
-            public bool Retract() { return true; }
-            public bool Retracted() { return true; }
-        }
-
         public class Walker
         {
-            PistonGroup extensionPistons;
-            PistonGroup frontPistons;
-            PistonGroup rearPistons;
+            protected PistonGroup extensionPistons;
+            protected PistonGroup frontPistons;
+            protected PistonGroup rearPistons;
 
-            LandingGearGroup frontGears;
-            LandingGearGroup rearGears;
+            protected LandingGearGroup frontGears;
+            protected LandingGearGroup rearGears;
 
             public WalkerSettings Settings = new WalkerSettings();
-            protected WalkerHooks ForwardHooks = new WalkerHooks();
-            protected WalkerHooks BackwardHooks = new WalkerHooks();
+
+            protected Hooks ForwardHooks;
+            protected Hooks BackwardHooks;
 
             public Walker(PistonGroup extensionPistons, PistonGroup frontPistons, PistonGroup rearPistons, LandingGearGroup frontGears, LandingGearGroup rearGears)
             {
@@ -54,6 +46,16 @@ namespace IngameScript
                 this.rearPistons = rearPistons;
                 this.frontGears = frontGears;
                 this.rearGears = rearGears;
+                ForwardHooks = new Hooks();
+                BackwardHooks = new Hooks();
+            }
+            
+            protected class Hooks
+            {
+                public Func<bool> Extend = () => true;
+                public Func<bool> Extended = () => true;
+                public Func<bool> Retract = () => true;
+                public Func<bool> Retracted = () => true;
             }
 
             bool ExtendAndLockFront()
