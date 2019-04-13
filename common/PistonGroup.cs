@@ -19,6 +19,14 @@ namespace IngameScript
 {
     partial class Program
     {
+        public class PistonSettings
+        {
+            public float ExtensionVelocity = 0.5f;
+            public float RetractionVelocity = 0.5f;
+            public float MinLimit = 0;
+            public float MaxLimit = 1;
+        }
+
         public class PistonGroup : FunctionalBlockGroup<IMyPistonBase>
         {
             private float extensionUnit;
