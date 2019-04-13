@@ -26,19 +26,14 @@ namespace IngameScript
             private MyGridProgram program;
             private List<IMyInventory> inventories;
 
-            public InventoryGroup(MyGridProgram program, List<IMyEntity> entitylist)
+            public InventoryGroup(List<IMyEntity> entitylist)
             {
-                this.program = program;
                 inventories = new List<IMyInventory>();
                 foreach (IMyEntity entity in entitylist)
                     inventories.Add(entity.GetInventory());
             }
 
-            private InventoryGroup(MyGridProgram program, List<IMyInventory> inventorylist)
-            {
-                this.program = program;
-                inventories = inventorylist;
-            }
+            private InventoryGroup(List<IMyInventory> inventorylist) { inventories = inventorylist; }
 
             public VRage.MyFixedPoint ItemAmount(MyItemType item)
             {
@@ -48,13 +43,23 @@ namespace IngameScript
                 return count;
             }
 
-            public VRage.MyFixedPoint AmountCanTransferTo(IMyInventory target, MyItemType item)
+            public VRage.MyFixedPoint MinAmountInOne(MyItemType item)
             {
-                VRage.MyFixedPoint count = 0;
+                VRage.MyFixedPoint minCount = MyFixedPoint.MaxValue;
                 foreach (IMyInventory inventory in inventories)
-                    if (inventory.CanTransferItemTo(target, item))
-                        count += inventory.GetItemAmount(item);
-                return count;
+                    minCount = MyFixedPoint.Min(minCount, inventory.GetItemAmount(item));
+                if (minCount == MyFixedPoint.MaxValue)
+                    return 0;
+                return minCount;
+            }
+
+            public bool CanTransferTo(InventoryGroup targetGroup, MyItemType item)
+            {
+                foreach (IMyInventory inventory in inventories)
+                    foreach (IMyInventory target in targetGroup.inventories)
+                        if (inventory.CanTransferItemTo(target, item))
+                            return true;
+                return false;
             }
 
             public static VRage.MyFixedPoint TransferBetween(IMyInventory source, IMyInventory target, MyItemType itemType, VRage.MyFixedPoint? amount = null)
@@ -115,7 +120,7 @@ namespace IngameScript
                 foreach (IMyInventory existing in inventories)
                     if (existing != inventory)
                         newList.Add(existing);
-                return new InventoryGroup(program, newList);
+                return new InventoryGroup(newList);
             }
 
             public void Balance(MyItemType item)
