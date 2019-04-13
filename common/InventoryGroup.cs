@@ -23,7 +23,6 @@ namespace IngameScript
 
         public class InventoryGroup
         {
-            private MyGridProgram program;
             private List<IMyInventory> inventories;
 
             public InventoryGroup(List<IMyEntity> entitylist)
