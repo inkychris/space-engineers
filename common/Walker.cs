@@ -97,11 +97,9 @@ namespace IngameScript
 
             public bool UnlockAndRetractFront()
             {
-                if (rearGears.AllLocked())
-                {
-                    frontGears.Unlock();
-                    program.Echo("Unlock Front");
-                }
+                if (!ExtendAndLockRear())
+                    return false;
+                frontGears.Unlock();
                 frontPistons.Velocity(Settings.Legs.RetractionVelocity);
                 frontPistons.MinLimit(Settings.Legs.MinLimit);
                 return frontPistons.Retract();
@@ -109,8 +107,9 @@ namespace IngameScript
 
             public bool UnlockAndRetractRear()
             {
-                if (frontGears.AllLocked())
-                    rearGears.Unlock();
+                if (!ExtendAndLockFront())
+                    return false;
+                rearGears.Unlock();
                 rearPistons.Velocity(Settings.Legs.RetractionVelocity);
                 rearPistons.MinLimit(Settings.Legs.MinLimit);
                 return rearPistons.Retract();
