@@ -22,20 +22,20 @@ namespace IngameScript
     {
         public class ArgParser
         {
-            private string arguments;
-            public ArgParser(string arguments) { this.arguments = arguments; }
+            public string Input;
+            public ArgParser(string input = "") { Input = input; }
 
             public bool Contains(string arg)
             {
                 string pattern = @"(?:\s|\A)(?:" + arg + @")(?:\s|\z|=)";
-                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(arguments, pattern);
+                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(Input, pattern);
                 return m.Success;
             }
 
             public string String(string arg, string fallback = "")
             {
                 string pattern = @"(?:\s|\A)(?:(?:" + arg + @")[\s=]?)(.+?)(?:\s|\z)";
-                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(arguments, pattern);
+                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(Input, pattern);
                 if (m.Success)
                     return m.Groups[1].Value;
                 return "";
