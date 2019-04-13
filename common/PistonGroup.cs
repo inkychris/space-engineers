@@ -64,21 +64,19 @@ namespace IngameScript
             public bool Extend()
             {
                 Enable();
-                bool extended = Extended();
-                if (!extended)
+                if (!Extended())
                     foreach (IMyPistonBase piston in group)
                         piston.Extend();
-                return extended;
+                return Extended();
             }
 
             public bool Retract()
             {
                 Enable();
-                bool retracted = Retracted();
-                if (!retracted)
+                if (!Retracted())
                     foreach (IMyPistonBase piston in group)
                         piston.Retract();
-                return retracted;
+                return Retracted();
             }
 
             public void GoTo(float target)
