@@ -19,7 +19,7 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class BlockGroup<T> : IEnumerable<T> where T : class, IMyFunctionalBlock, IMyTerminalBlock, IMyCubeBlock, IMyEntity
+        public class BlockGroup<T> : IEnumerable<T> where T : class
         {
             protected List<T> group;
 
@@ -32,6 +32,14 @@ namespace IngameScript
 
             public T First() { return group.First(); }
 
+            public IEnumerator<T> GetEnumerator() { return group.GetEnumerator(); }
+            IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
+        }
+
+        public class FunctionalBlockGroup<T> : BlockGroup<T> where T : class, IMyFunctionalBlock
+        {
+            public FunctionalBlockGroup(List<T> blocklist) : base(blocklist) { }
+
             public void Enable()
             {
                 foreach (T block in group)
@@ -43,9 +51,6 @@ namespace IngameScript
                 foreach (T block in group)
                     block.Enabled = false;
             }
-
-            public IEnumerator<T> GetEnumerator() { return group.GetEnumerator(); }
-            IEnumerator IEnumerable.GetEnumerator() { return GetEnumerator(); }
         }
     }
 }

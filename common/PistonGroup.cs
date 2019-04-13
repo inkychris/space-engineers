@@ -19,7 +19,7 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class PistonGroup : BlockGroup<IMyPistonBase>
+        public class PistonGroup : FunctionalBlockGroup<IMyPistonBase>
         {
             private float extensionUnit;
 
@@ -47,33 +47,33 @@ namespace IngameScript
                     piston.MaxLimit = limit * extensionUnit;
             }
 
-            public bool Extend(float velocity = 0.5f)
+            public void Velocity(float velocity)
+            {
+                foreach (IMyPistonBase piston in group)
+                    piston.Velocity = velocity * extensionUnit;
+            }
+
+            public bool Extend()
             {
                 Enable();
                 bool extended = Extended();
                 if (!extended)
                     foreach (IMyPistonBase piston in group)
-                    {
-                        piston.Velocity = velocity * extensionUnit;
                         piston.Extend();
-                    }
                 return extended;
             }
 
-            public bool Retract(float velocity = 0.5f)
+            public bool Retract()
             {
                 Enable();
                 bool retracted = Retracted();
                 if (!retracted)
                     foreach (IMyPistonBase piston in group)
-                    {
-                        piston.Velocity = velocity * extensionUnit;
                         piston.Retract();
-                    }
                 return retracted;
             }
 
-            public void GoTo(float target, float velocity)
+            public void GoTo(float target)
             {
                 if (target > HighestPosition())
                     target = HighestPosition();
@@ -83,17 +83,17 @@ namespace IngameScript
                 {
                     MinLimit(CurrentPosition());
                     MaxLimit(target);
-                    Extend(velocity);
+                    Extend();
                 }
                 else
                 {
                     MinLimit(target);
                     MaxLimit(CurrentPosition());
-                    Retract(velocity);
+                    Retract();
                 }
             }
 
-            public void GoToRelative(float offset, float velocity) { GoTo(CurrentPosition() + offset, velocity); }
+            public void GoToRelative(float offset) { GoTo(CurrentPosition() + offset); }
 
             private bool Is(PistonStatus status)
             {

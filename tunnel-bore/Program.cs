@@ -44,13 +44,13 @@ namespace IngameScript
                     return;
                 case "extend":
                     ConnectorFront.Disconnect();
+                    ExtensionPistons.Velocity(0.5f);
                     ExtensionPistons.Extend();
                     Idle();
                     return;
                 case "retract":
-                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                    if (!ExtensionPistons.Retract())
-                        return;
+                    ExtensionPistons.Velocity(0.5f);
+                    ExtensionPistons.Retract();
                     Idle();
                     return;
                 case "extend front":
@@ -124,6 +124,8 @@ namespace IngameScript
             }
         }
 
+        private Dictionary<string, float> velocities;
+
         private PistonGroup ExtensionPistons;
         private PistonGroup FrontGearPistons;
         private PistonGroup RearGearPistons;
@@ -131,10 +133,9 @@ namespace IngameScript
         private LandingGearGroup FrontGears;
         private LandingGearGroup RearGears;
 
-        private BlockGroup<IMyShipDrill> Drills;
+        private FunctionalBlockGroup<IMyShipDrill> Drills;
         private IMyMotorStator DrillRotor;
-
-        private BlockGroup<IMyShipWelder> Welders;
+        private FunctionalBlockGroup<IMyShipWelder> Welders;
 
         private IMyCockpit cockpit;
 
@@ -158,13 +159,12 @@ namespace IngameScript
             FrontGears = new LandingGearGroup(GetBlocksFromGroup<IMyLandingGear>("Front Landing Gears"));
             RearGears = new LandingGearGroup(GetBlocksFromGroup<IMyLandingGear>("Rear Landing Gears"));
 
-            Drills = new BlockGroup<IMyShipDrill>(GetBlocksFromGroup<IMyShipDrill>("Drills"));
+            Drills = new FunctionalBlockGroup<IMyShipDrill>(GetBlocksFromGroup<IMyShipDrill>("Drills"));
             DrillRotor = GetBlock<IMyMotorStator>("Drill Rotor");
-
-            Welders = new BlockGroup<IMyShipWelder>(GetBlocksFromGroup<IMyShipWelder>("Welders"));
+            Welders = new FunctionalBlockGroup<IMyShipWelder>(GetBlocksFromGroup<IMyShipWelder>("Welders"));
 
             cockpit = GetBlock<IMyCockpit>("Cockpit");
-
+            
             ConnectorFront = GetBlock<IMyShipConnector>("Connector Centre Front");
             ContainerFront = GetBlock<IMyCargoContainer>("Cargo Container Front");
             ContainerRear = GetBlock<IMyCargoContainer>("Cargo Container Rear");
@@ -201,7 +201,8 @@ namespace IngameScript
                     return;
                 if (!UnlockAndRetractFront())
                     return;
-                ExtensionPistons.Extend(velocity);
+                ExtensionPistons.Velocity(velocity);
+                ExtensionPistons.Extend();
                 return;
             }
 
@@ -211,6 +212,7 @@ namespace IngameScript
                     return;
                 if (!UnlockAndRetractRear())
                     return;
+                ExtensionPistons.Velocity(0.5f);
                 ExtensionPistons.Retract();
                 return;
             }
@@ -227,6 +229,7 @@ namespace IngameScript
                     return;
                 if (!UnlockAndRetractRear())
                     return;
+                ExtensionPistons.Velocity(0.5f);
                 ExtensionPistons.Extend();
                 return;
             }
@@ -237,6 +240,7 @@ namespace IngameScript
                     return;
                 if (!UnlockAndRetractFront())
                     return;
+                ExtensionPistons.Velocity(0.5f);
                 ExtensionPistons.Retract();
                 return;
             }
@@ -269,6 +273,7 @@ namespace IngameScript
         // Whole Landing Gear Legs
         bool ExtendAndLockFront()
         {
+            FrontGearPistons.Velocity(0.5f);
             if (FrontGearPistons.Extend())
             {
                 FrontGears.Lock();
@@ -279,6 +284,7 @@ namespace IngameScript
 
         bool ExtendAndLockRear()
         {
+            RearGearPistons.Velocity(0.5f);
             if (RearGearPistons.Extend())
             {
                 RearGears.Lock();
@@ -291,6 +297,7 @@ namespace IngameScript
         {
             if (RearGears.AllLocked())
                 FrontGears.Unlock();
+            FrontGearPistons.Velocity(0.5f);
             FrontGearPistons.MinLimit(minLimit);
             return FrontGearPistons.Retract();
         }
@@ -299,6 +306,7 @@ namespace IngameScript
         {
             if (FrontGears.AllLocked())
                 RearGears.Unlock();
+            RearGearPistons.Velocity(0.5f);
             RearGearPistons.MinLimit(minLimit);
             return RearGearPistons.Retract();
         }
@@ -307,8 +315,10 @@ namespace IngameScript
         {
             if (!(FrontGearPistons.Extending() && RearGearPistons.Extending()))
             {
-                FrontGearPistons.Extend(0.1f);
-                RearGearPistons.Extend(0.1f);
+                FrontGearPistons.Velocity(0.1f);
+                FrontGearPistons.Extend();
+                RearGearPistons.Velocity(0.1f);
+                RearGearPistons.Extend();
             }
             if (FrontGearPistons.Extended() && RearGearPistons.Extended())
             {
@@ -326,8 +336,10 @@ namespace IngameScript
             RearGearPistons.MinLimit(0);
             if (!(FrontGearPistons.Retracting() && RearGearPistons.Retracting()))
             {
-                FrontGearPistons.Retract(0.2f);
-                RearGearPistons.Retract(0.2f);
+                FrontGearPistons.Velocity(0.15f);
+                FrontGearPistons.Retract();
+                RearGearPistons.Velocity(0.15f);
+                RearGearPistons.Retract();
             }
             if (!FrontGears.AllUnlocked())
                 FrontGears.Unlock();
@@ -339,14 +351,14 @@ namespace IngameScript
         // Steel Plate Transfer
         IMyInventory MostFullInventory(MyItemType item)
         {
-            if (FrontContainerInventory.GetItemAmount(item) > RearContainerInventory.GetItemAmount(SteelPlate))
+            if (FrontContainerInventory.GetItemAmount(item) > RearContainerInventory.GetItemAmount(item))
                 return FrontContainerInventory;
             return RearContainerInventory;
         }
 
         VRage.MyFixedPoint TotalItems(MyItemType item)
         {
-            return FrontContainerInventory.GetItemAmount(item) + RearContainerInventory.GetItemAmount(SteelPlate);
+            return FrontContainerInventory.GetItemAmount(item) + RearContainerInventory.GetItemAmount(item);
         }
 
         bool Transfer()

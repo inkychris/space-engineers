@@ -24,8 +24,10 @@ namespace IngameScript
         {
             public PistonStack(List<IMyPistonBase> blocklist, float unit = 1) : base(blocklist, unit) { }
 
-            new public bool Extend(float velocity) { return base.Extend(velocity / group.Count); }
-            new public bool Retract(float velocity) { return base.Retract(velocity / group.Count); }
+            new public void Velocity(float velocity) { base.Velocity(velocity / group.Count); }
+
+            new public bool Extend() { return base.Extend(); }
+            new public bool Retract() { return base.Retract(); }
 
             new public float HighestPosition() { return base.HighestPosition() * group.Count; }
             new public float LowestPosition() { return base.LowestPosition() * group.Count; }
@@ -34,7 +36,7 @@ namespace IngameScript
             new public void MinLimit(float limit) { base.MinLimit(limit / group.Count); }
             new public void MaxLimit(float limit) { base.MaxLimit(limit / group.Count); }
 
-            new public void GoTo(float target, float velocity) { base.GoTo(target / group.Count, velocity / group.Count); }
+            new public void GoTo(float target) { base.GoTo(target / group.Count); }
         }
     }
 }

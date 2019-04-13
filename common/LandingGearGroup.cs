@@ -19,7 +19,7 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class LandingGearGroup : BlockGroup<IMyLandingGear>
+        public class LandingGearGroup : FunctionalBlockGroup<IMyLandingGear>
         {
             public LandingGearGroup(List<IMyLandingGear> blocklist) : base(blocklist) { }
 
