@@ -49,11 +49,9 @@ namespace IngameScript
 
             if (parser.Contains("extend"))
             {
-                Echo("Extend");
                 switch (parser.String("extend"))
                 {
                     case "front":
-                        Echo("Front");
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
                         if (!tunnelBore.ExtendAndLockFront())
                             return;
@@ -61,14 +59,12 @@ namespace IngameScript
                         return;
                     case "rear":
                     case "back":
-                        Echo("Rear");
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
                         if (!tunnelBore.ExtendAndLockRear())
                             return;
                         Idle();
                         return;
                     default:
-                        Echo("Default");
                         var position = parser.Float("extend");
                         if (position != 0)
                             tunnelBore.GoToRelative(position);
@@ -81,11 +77,9 @@ namespace IngameScript
 
             if (parser.Contains("retract"))
             {
-                Echo("Retract");
                 switch (parser.String("retract"))
                 {
                     case "front":
-                        Echo("Front");
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
                         if (!tunnelBore.UnlockAndRetractFront())
                             return;
@@ -93,14 +87,12 @@ namespace IngameScript
                         return;
                     case "rear":
                     case "back":
-                        Echo("Rear");
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
                         if (!tunnelBore.UnlockAndRetractRear())
                             return;
                         Idle();
                         return;
                     default:
-                        Echo("Default");
                         var position = parser.Float("retract");
                         if (position != 0)
                             tunnelBore.GoToRelative(position);
