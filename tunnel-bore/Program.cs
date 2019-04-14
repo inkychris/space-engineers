@@ -26,6 +26,7 @@ namespace IngameScript
         {
             tunnelBore = new TunnelBore(this);
             parser = new ArgParser();
+            parser.MatchOptions = System.Text.RegularExpressions.RegexOptions.IgnoreCase;
 
             tunnelBore.LegSettings.RetractionVelocity = 0.15f;
             tunnelBore.LegSettings.ExtensionVelocity = 0.15f;
@@ -178,6 +179,48 @@ namespace IngameScript
                         return;
                     default:
                         Echo("Unrecognised command!");
+                        return;
+                }
+            }
+
+            if (parser.Contains("lock"))
+            {
+                switch (parser.String("lock"))
+                {
+                    case "front":
+                        tunnelBore.Front.Gears.Lock();
+                        Idle();
+                        return;
+                    case "back":
+                    case "rear":
+                        tunnelBore.Rear.Gears.Lock();
+                        Idle();
+                        return;
+                    default:
+                        tunnelBore.Front.Gears.Lock();
+                        tunnelBore.Rear.Gears.Lock();
+                        Idle();
+                        return;
+                }
+            }
+
+            if (parser.Contains("unlock"))
+            {
+                switch(parser.String("unlock"))
+                {
+                    case "front":
+                        tunnelBore.Front.Gears.Unlock();
+                        Idle();
+                        return;
+                    case "back":
+                    case "rear":
+                        tunnelBore.Rear.Gears.Unlock();
+                        Idle();
+                        return;
+                    default:
+                        tunnelBore.Front.Gears.Unlock();
+                        tunnelBore.Rear.Gears.Unlock();
+                        Idle();
                         return;
                 }
             }
