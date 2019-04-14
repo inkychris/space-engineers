@@ -27,19 +27,23 @@ namespace IngameScript
             tunnelBore = new TunnelBore(this);
             parser = new ArgParser();
 
-            tunnelBore.Settings.Legs.RetractionVelocity = 0.15f;
-            tunnelBore.Settings.Legs.ExtensionVelocity = 0.15f;
-            tunnelBore.Settings.Legs.MinLimit = 1.25f;
-            tunnelBore.Settings.Legs.MaxLimit = 1.5f;
+            tunnelBore.LegSettings.RetractionVelocity = 0.15f;
+            tunnelBore.LegSettings.ExtensionVelocity = 0.15f;
+            tunnelBore.LegSettings.MinLimit = 1.25f;
+            tunnelBore.LegSettings.MaxLimit = 1.5f;
 
-            tunnelBore.Settings.Extension.ExtensionVelocity = 0.075f;
-            tunnelBore.Settings.Extension.ExtensionVelocity = 0.1f;
-            tunnelBore.Settings.Extension.MinLimit = 0;
-            tunnelBore.Settings.Extension.MaxLimit = 2f;
+            tunnelBore.ForwardSettings.ExtensionVelocity = 0.075f;
+            tunnelBore.ForwardSettings.RetractionVelocity = 0.2f;
+            tunnelBore.ForwardSettings.MaxLimit = 2f;
+
+            tunnelBore.BackwardSettings.ExtensionVelocity = 0.2f;
+            tunnelBore.BackwardSettings.RetractionVelocity = 0.2f;
+            tunnelBore.BackwardSettings.MaxLimit = 2f;
         }
 
         public void Main(string argument, UpdateType updateSource)
         {
+            Echo(System.DateTime.Now.ToString());
             string previousInput = "";
             if (argument != "")
             {
@@ -53,14 +57,14 @@ namespace IngameScript
                 {
                     case "front":
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                        if (!tunnelBore.ExtendAndLockFront())
+                        if (!tunnelBore.Front.ExtendAndLock())
                             return;
                         Idle();
                         return;
                     case "rear":
                     case "back":
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                        if (!tunnelBore.ExtendAndLockRear())
+                        if (!tunnelBore.Rear.ExtendAndLock())
                             return;
                         Idle();
                         return;
@@ -81,14 +85,14 @@ namespace IngameScript
                 {
                     case "front":
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                        if (!tunnelBore.UnlockAndRetractFront())
+                        if (!tunnelBore.Front.UnlockAndRetract())
                             return;
                         Idle();
                         return;
                     case "rear":
                     case "back":
                         Runtime.UpdateFrequency = UpdateFrequency.Update10;
-                        if (!tunnelBore.UnlockAndRetractRear())
+                        if (!tunnelBore.Rear.UnlockAndRetract())
                             return;
                         Idle();
                         return;

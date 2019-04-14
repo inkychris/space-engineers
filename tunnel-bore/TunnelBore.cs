@@ -20,7 +20,7 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class TunnelBoreSettings : WalkerSettings
+        public class TunnelBoreSettings
         {
             public float DrillVelocityRPM = 60f;
             public float DrillBreakTorque = 100000f;
@@ -43,37 +43,32 @@ namespace IngameScript
 
             private MyItemType SteelPlate;
 
-            new public TunnelBoreSettings Settings;
+            public TunnelBoreSettings Settings;
 
-            public TunnelBore(Program parent) : base(parent,
-                    extensionPistons: new PistonGroup(parent.GetBlocksFromGroup<IMyPistonBase>("Extension Pistons")),
-                    frontPistons: new PistonGroup(parent.GetBlocksFromGroup<IMyPistonBase>("Front Gear Pistons")),
-                    rearPistons: new PistonGroup(parent.GetBlocksFromGroup<IMyPistonBase>("Rear Gear Pistons")),
-                    frontGears: new LandingGearGroup(parent.GetBlocksFromGroup<IMyLandingGear>("Front Landing Gears")),
-                    rearGears: new LandingGearGroup(parent.GetBlocksFromGroup<IMyLandingGear>("Rear Landing Gears"))
-                )
+            private Program program;
+
+            public TunnelBore(Program program) : base(program)
             {
+                this.program = program;
                 Settings = new TunnelBoreSettings();
-                base.Settings = Settings;
 
-                Drills = new FunctionalBlockGroup<IMyShipDrill>(parent.GetBlocksFromGroup<IMyShipDrill>("Drills"));
-                DrillRotor = parent.GetBlock<IMyMotorStator>("Drill Rotor");
+                Drills = new FunctionalBlockGroup<IMyShipDrill>(program.GetBlocksFromGroup<IMyShipDrill>("Drills"));
+                DrillRotor = program.GetBlock<IMyMotorStator>("Drill Rotor");
 
-                Welders = new FunctionalBlockGroup<IMyShipWelder>(parent.GetBlocksFromGroup<IMyShipWelder>("Welders"));
-                WelderInventories = new InventoryGroup(parent.GetBlocksFromGroup<IMyEntity>("Welders"));
+                Welders = new FunctionalBlockGroup<IMyShipWelder>(program.GetBlocksFromGroup<IMyShipWelder>("Welders"));
+                WelderInventories = new InventoryGroup(program.GetBlocksFromGroup<IMyEntity>("Welders"));
 
-                ConnectorFront = parent.GetBlock<IMyShipConnector>("Connector Centre Front");
-                StorageInventories = new InventoryGroup(parent.GetBlocksFromGroup<IMyEntity>("Storage"));
+                ConnectorFront = program.GetBlock<IMyShipConnector>("Connector Centre Front");
+                StorageInventories = new InventoryGroup(program.GetBlocksFromGroup<IMyEntity>("Storage"));
 
-                cockpit = parent.GetBlock<IMyCockpit>("Cockpit");
+                cockpit = program.GetBlock<IMyCockpit>("Cockpit");
 
                 SteelPlate = new MyItemType("MyObjectBuilder_Component", "SteelPlate");
+
                 ForwardHooks.Retracted = Transfer;
-                ForwardHooks.Extend = Disconnect;
+                ForwardHooks.Extend = () => { WelderInventories.Balance(SteelPlate); return Disconnect(); };
                 BackwardHooks.Extend = Disconnect;
             }
-
-            new protected Hooks ForwardHooks = new Hooks();
 
             public void EnableDrills()
             {
@@ -103,19 +98,19 @@ namespace IngameScript
 
             public bool WalkMode()
             {
-                frontPistons.MinLimit(Settings.Legs.MaxLimit);
-                rearPistons.MinLimit(Settings.Legs.MaxLimit);
-                if (!(frontPistons.Extending() && rearPistons.Extending()))
+                Front.Pistons.MinLimit(LegSettings.MinLimit);
+                Rear.Pistons.MinLimit(LegSettings.MaxLimit);
+                if (!(Front.Pistons.Extending() && Rear.Pistons.Extending()))
                 {
-                    frontPistons.Velocity(Settings.Legs.ExtensionVelocity);
-                    frontPistons.Extend();
-                    rearPistons.Velocity(Settings.Legs.ExtensionVelocity);
-                    rearPistons.Extend();
+                    Front.Pistons.Velocity(LegSettings.ExtensionVelocity);
+                    Front.Pistons.Extend();
+                    Rear.Pistons.Velocity(LegSettings.ExtensionVelocity);
+                    Rear.Pistons.Extend();
                 }
-                if (frontPistons.Extended() && rearPistons.Extended())
+                if (Front.Pistons.Extended() && Rear.Pistons.Extended())
                 {
-                    frontGears.Lock();
-                    rearGears.Lock();
+                    Front.Gears.Lock();
+                    Rear.Gears.Lock();
                     return true;
                 }
                 return false;
@@ -124,20 +119,18 @@ namespace IngameScript
             public bool DriveMode()
             {
                 cockpit.HandBrake = true;
-                frontPistons.MinLimit(Settings.Legs.MinLimit);
-                rearPistons.MinLimit(Settings.Legs.MinLimit);
-                if (!(frontPistons.Retracting() && rearPistons.Retracting()))
+                Front.Pistons.MinLimit(LegSettings.MinLimit);
+                Rear.Pistons.MinLimit(LegSettings.MinLimit);
+                if (!(Front.Pistons.Retracting() && Rear.Pistons.Retracting()))
                 {
-                    frontPistons.Velocity(0.15f);
-                    frontPistons.Retract();
-                    rearPistons.Velocity(0.15f);
-                    rearPistons.Retract();
+                    Front.Pistons.Velocity(LegSettings.RetractionVelocity);
+                    Front.Pistons.Retract();
+                    Rear.Pistons.Velocity(LegSettings.RetractionVelocity);
+                    Rear.Pistons.Retract();
                 }
-                if (!frontGears.AllUnlocked())
-                    frontGears.Unlock();
-                if (!rearGears.AllUnlocked())
-                    rearGears.Unlock();
-                return frontPistons.Retracted() && rearPistons.Retracted();
+                Front.Gears.Unlock();
+                Rear.Gears.Unlock();
+                return Front.Pistons.Retracted() && Rear.Pistons.Retracted();
             }
 
             public bool Connect()
@@ -154,24 +147,28 @@ namespace IngameScript
 
             public bool Transfer()
             {
-                if (!Connect())
-                    return false;
-                if (WelderInventories.MinAmountInOne(SteelPlate) < Settings.MinWelderInventoryCount)
-                    return false;
+                Connect();
+                if (WelderInventories.ItemAmount(SteelPlate) >= Welders.Count() * Settings.MinWelderInventoryCount)
+                    return Disconnect();
                 if (!StorageInventories.CanTransferTo(WelderInventories, SteelPlate))
                     return false;
-                StorageInventories.TransferTo(WelderInventories, SteelPlate, Settings.WelderInventoryTransferCount);
+                StorageInventories.TransferTo(WelderInventories, SteelPlate, Welders.Count() * Settings.WelderInventoryTransferCount);
                 WelderInventories.Balance(SteelPlate);
+                if (WelderInventories.MinAmountInOne(SteelPlate) < Settings.MinWelderInventoryCount)
+                {
+                    program.Echo("Not enough steel plate in welder(s)!");
+                    return false;
+                }
                 return Disconnect();
             }
 
-            public void GoTo(float position) { extensionPistons.GoTo(position); }
-            public void GoToRelative(float position) { extensionPistons.GoToRelative(position); }
+            public void GoTo(float position) { ExtensionPistons.GoTo(position); }
+            public void GoToRelative(float position) { ExtensionPistons.GoToRelative(position); }
 
             public bool Stop()
             {
                 DisableWelders();
-                extensionPistons.Disable();
+                ExtensionPistons.Disable();
                 if (!DisableDrills())
                     return false;
                 return true;

@@ -20,44 +20,36 @@ namespace IngameScript
 {
     partial class Program
     {
-        public class WalkerSettings
-        {
-            public WalkerSettings()
-            {
-                Extension = new PistonSettings();
-                Legs = new PistonSettings();
-            }
-
-            public PistonSettings Extension;
-            public PistonSettings Legs;
-        }
-
         public class Walker
         {
-            protected PistonGroup extensionPistons;
-            protected PistonGroup frontPistons;
-            protected PistonGroup rearPistons;
+            public WalkerLegGroup Front;
+            public WalkerLegGroup Rear;
+            public PistonGroup ExtensionPistons;
 
-            protected LandingGearGroup frontGears;
-            protected LandingGearGroup rearGears;
-
-            public WalkerSettings Settings;
+            public PistonSettings LegSettings;
+            public PistonSettings ForwardSettings;
+            public PistonSettings BackwardSettings;
 
             protected Hooks ForwardHooks;
             protected Hooks BackwardHooks;
 
-            private Program program;
-
-            public Walker(Program prog, PistonGroup extensionPistons, PistonGroup frontPistons, PistonGroup rearPistons, LandingGearGroup frontGears, LandingGearGroup rearGears)
+            public Walker(Program progam, string BlockGroupPrefix = "")
             {
-                program = prog;
-                Settings = new WalkerSettings();
+                Front = new WalkerLegGroup(
+                    new PistonGroup(progam.GetBlocksFromGroup<IMyPistonBase>(BlockGroupPrefix + "Front Gear Pistons")),
+                    new LandingGearGroup(progam.GetBlocksFromGroup<IMyLandingGear>(BlockGroupPrefix + "Front Landing Gears"))
+                );
+                Rear = new WalkerLegGroup(
+                    new PistonGroup(progam.GetBlocksFromGroup<IMyPistonBase>(BlockGroupPrefix + "Rear Gear Pistons")),
+                    new LandingGearGroup(progam.GetBlocksFromGroup<IMyLandingGear>(BlockGroupPrefix + "Rear Landing Gears"))
+                );
+                ExtensionPistons = new PistonGroup(progam.GetBlocksFromGroup<IMyPistonBase>(BlockGroupPrefix + "Extension Pistons"));
 
-                this.extensionPistons = extensionPistons;
-                this.frontPistons = frontPistons;
-                this.rearPistons = rearPistons;
-                this.frontGears = frontGears;
-                this.rearGears = rearGears;
+                LegSettings = new PistonSettings();
+                Front.Settings = Rear.Settings = LegSettings;
+
+                ForwardSettings = new PistonSettings();
+                BackwardSettings = ForwardSettings;
 
                 ForwardHooks = new Hooks();
                 BackwardHooks = new Hooks();
@@ -71,131 +63,102 @@ namespace IngameScript
                 public Func<bool> Retracted = () => true;
             }
 
-            public bool ExtendAndLockFront()
+            public void Forward() { Walk(Front, Rear, ForwardSettings, ForwardHooks); }
+            public void Backward() { Walk(Rear, Front, BackwardSettings, BackwardHooks); }
+
+            private void Walk(WalkerLegGroup front, WalkerLegGroup rear, PistonSettings extSettings, Hooks hooks)
             {
-                frontPistons.Velocity(Settings.Legs.ExtensionVelocity);
-                frontPistons.MaxLimit(Settings.Legs.MaxLimit);
-                if (frontPistons.Extend())
+                if (ExtensionPistons.Disabled())
                 {
-                    frontGears.Lock();
-                    return frontGears.AllLocked();
+                    if (!front.ExtendAndLock())
+                        return;
+                    if (!rear.UnlockAndRetract())
+                        return;
+                    ExtensionPistons.Enable();
+                    ExtensionPistons.Retract();
+                }
+
+                if (ExtensionPistons.Retracted())
+                    if (!hooks.Retracted())
+                        return;
+
+                if (ExtensionPistons.Extended())
+                    if (!hooks.Extended())
+                        return;
+
+                if (ExtensionPistons.Retracted() || ExtensionPistons.Extending())
+                {
+                    if (!hooks.Extend())
+                        return;
+                    if (!rear.ExtendAndLock())
+                        return;
+                    if (!front.UnlockAndRetract())
+                        return;
+                    ExtensionPistons.MaxLimit(extSettings.MaxLimit);
+                    ExtensionPistons.Velocity(extSettings.ExtensionVelocity);
+                    ExtensionPistons.Extend();
+                    return;
+                }
+
+                if (ExtensionPistons.Extended() || ExtensionPistons.Retracting())
+                {
+                    if (!hooks.Retract())
+                        return;
+                    if (!front.ExtendAndLock())
+                        return;
+                    if (!rear.UnlockAndRetract())
+                        return;
+                    ExtensionPistons.MinLimit(extSettings.MinLimit);
+                    ExtensionPistons.Velocity(extSettings.RetractionVelocity);
+                    ExtensionPistons.Retract();
+                    return;
+                }
+
+                if (front.ExtendedAndLocked())
+                    ExtensionPistons.Retract();
+                if (rear.ExtendedAndLocked())
+                    ExtensionPistons.Extend();
+            }
+        }
+
+        public class WalkerLegGroup
+        {
+            public PistonGroup Pistons;
+            public LandingGearGroup Gears;
+
+            public PistonSettings Settings;
+
+            public WalkerLegGroup(PistonGroup pistons, LandingGearGroup gears)
+            {
+                Settings = new PistonSettings();
+                Pistons = pistons;
+                Gears = gears;
+            }
+
+            public bool ExtendedAndLocked() { return Pistons.Extended() && Gears.AllLocked(); }
+
+            public bool ExtendAndLock()
+            {
+                Pistons.Velocity(Settings.ExtensionVelocity);
+                Pistons.MaxLimit(Settings.MaxLimit);
+                if (Pistons.Extend())
+                {
+                    Gears.Lock();
+                    return Gears.AllLocked();
                 }
                 return false;
             }
 
-            public bool ExtendAndLockRear()
+            public bool UnlockedAndRetracted() { return Pistons.Extended() && Gears.AllLocked(); }
+
+            public bool UnlockAndRetract()
             {
-                rearPistons.Velocity(Settings.Legs.ExtensionVelocity);
-                rearPistons.MaxLimit(Settings.Legs.MaxLimit);
-                if (rearPistons.Extend())
-                {
-                    rearGears.Lock();
-                    return rearGears.AllLocked();
-                }
-                return false;
+                Gears.Unlock();
+                Pistons.Velocity(Settings.RetractionVelocity);
+                Pistons.MinLimit(Settings.MinLimit);
+                return Pistons.Retract();
             }
 
-            public bool UnlockAndRetractFront()
-            {
-                if (!ExtendAndLockRear())
-                    return false;
-                frontGears.Unlock();
-                frontPistons.Velocity(Settings.Legs.RetractionVelocity);
-                frontPistons.MinLimit(Settings.Legs.MinLimit);
-                return frontPistons.Retract();
-            }
-
-            public bool UnlockAndRetractRear()
-            {
-                if (!ExtendAndLockFront())
-                    return false;
-                rearGears.Unlock();
-                rearPistons.Velocity(Settings.Legs.RetractionVelocity);
-                rearPistons.MinLimit(Settings.Legs.MinLimit);
-                return rearPistons.Retract();
-            }
-
-            public void Forward()
-            {
-                if (extensionPistons.Stopped())
-                    extensionPistons.Enable();
-
-                if (extensionPistons.Retracted())
-                    if (!ForwardHooks.Retracted())
-                        return;
-
-                if (extensionPistons.Extended())
-                    if (!ForwardHooks.Extended())
-                        return;
-
-                if (extensionPistons.Retracted() || extensionPistons.Extending())
-                {
-                    if (!ForwardHooks.Extend())
-                        return;
-                    if (!ExtendAndLockRear())
-                        return;
-                    if (!UnlockAndRetractFront())
-                        return;
-                    extensionPistons.MaxLimit(Settings.Extension.MaxLimit);
-                    extensionPistons.Velocity(Settings.Extension.ExtensionVelocity);
-                    extensionPistons.Extend();
-                    return;
-                }
-
-                if (extensionPistons.Extended() || extensionPistons.Retracting())
-                {
-                    if (!ForwardHooks.Retract())
-                        return;
-                    if (!ExtendAndLockFront())
-                        return;
-                    if (!UnlockAndRetractRear())
-                        return;
-                    extensionPistons.MinLimit(Settings.Extension.MinLimit);
-                    extensionPistons.Velocity(Settings.Extension.RetractionVelocity);
-                    extensionPistons.Retract();
-                    return;
-                }
-            }
-
-            public void Backward()
-            {
-                if (extensionPistons.Stopped())
-                    extensionPistons.Enable();
-
-                if (extensionPistons.Retracted())
-                    if (!BackwardHooks.Retracted())
-                        return;
-
-                if (extensionPistons.Extended())
-                    if (!BackwardHooks.Extended())
-                        return;
-
-                if (extensionPistons.Retracted() || extensionPistons.Extending())
-                {
-                    if (!BackwardHooks.Extend())
-                        return;
-                    if (!ExtendAndLockFront())
-                        return;
-                    if (!UnlockAndRetractRear())
-                        return;
-                    extensionPistons.Velocity(Settings.Extension.ExtensionVelocity);
-                    extensionPistons.Extend();
-                    return;
-                }
-
-                if (extensionPistons.Extended() || extensionPistons.Retracting())
-                {
-                    if (!BackwardHooks.Retract())
-                        return;
-                    if (!ExtendAndLockRear())
-                        return;
-                    if (!UnlockAndRetractFront())
-                        return;
-                    extensionPistons.Velocity(Settings.Extension.RetractionVelocity);
-                    extensionPistons.Retract();
-                    return;
-                }
-            }
         }
     }
 }
