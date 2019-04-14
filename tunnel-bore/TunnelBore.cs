@@ -119,8 +119,8 @@ namespace IngameScript
             public bool DriveMode()
             {
                 cockpit.HandBrake = true;
-                Front.Pistons.MinLimit(LegSettings.MinLimit);
-                Rear.Pistons.MinLimit(LegSettings.MinLimit);
+                Front.Pistons.MinLimit(0);
+                Rear.Pistons.MinLimit(0);
                 if (!(Front.Pistons.Retracting() && Rear.Pistons.Retracting()))
                 {
                     Front.Pistons.Velocity(LegSettings.RetractionVelocity);
