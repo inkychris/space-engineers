@@ -23,12 +23,18 @@ namespace IngameScript
         public class ArgParser
         {
             public string Input;
-            public ArgParser(string input = "") { Input = input; }
+            public System.Text.RegularExpressions.RegexOptions MatchOptions;
+
+            public ArgParser(string input = "")
+            {
+                Input = input;
+                MatchOptions = System.Text.RegularExpressions.RegexOptions.None;
+            }
 
             public bool Contains(string arg)
             {
                 string pattern = @"(?:\s|\A)(?:" + arg + @")(?:\s|\z|=)";
-                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(Input, pattern);
+                System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(Input, pattern, MatchOptions);
                 return m.Success;
             }
 
