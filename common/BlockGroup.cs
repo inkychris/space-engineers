@@ -46,10 +46,26 @@ namespace IngameScript
                     block.Enabled = true;
             }
 
+            public bool Enabled()
+            {
+                foreach (T block in group)
+                    if (!block.Enabled)
+                        return false;
+                return true;
+            }
+
             public void Disable()
             {
                 foreach (T block in group)
                     block.Enabled = false;
+            }
+
+            public bool Disabled()
+            {
+                foreach (T block in group)
+                    if (block.Enabled)
+                        return false;
+                return true;
             }
         }
     }
