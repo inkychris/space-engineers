@@ -124,7 +124,7 @@ namespace IngameScript
 
             public void Balance(MyItemType item)
             {
-                var balancedAmount = (VRage.MyFixedPoint)((double)ItemAmount(item) / inventories.Count);
+                var balancedAmount = VRage.MyFixedPoint.Floor((VRage.MyFixedPoint)((double)ItemAmount(item) / inventories.Count));
                 InventoryGroup invGroup = this;
                 foreach (IMyInventory inventory in inventories)
                 {
