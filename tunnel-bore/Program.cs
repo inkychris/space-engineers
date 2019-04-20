@@ -100,7 +100,7 @@ namespace IngameScript
                     default:
                         var position = parser.Float("retract");
                         if (position != 0)
-                            tunnelBore.GoToRelative(position);
+                            tunnelBore.GoToRelative(-position);
                         else
                             tunnelBore.GoTo(0);
                         Idle();
